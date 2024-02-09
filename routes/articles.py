@@ -22,7 +22,7 @@ def get_articles_by_title():
             if sort_param == 'title':
                 sort = "ORDER BY article.title ASC"
             elif sort_param == 'publication-date':
-                sort = "ORDER BY article.publication_date ASC"
+                sort = "ORDER BY article.publication_date DESC"
             elif sort_param == 'recently-added':
                 sort = "ORDER BY article.date_added DESC"
             elif sort_param == 'popular':
