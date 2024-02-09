@@ -72,6 +72,8 @@ def get_issue(issue_id):
 def get_articles_by_issues():
 
     issue = request.args.get('issue')
+    page = request.args.get('page',1)
+    offset = (int(page) -1)* 10
     try:
         db.ping(reconnect=True)
         with db.cursor() as cursor:
@@ -113,6 +115,7 @@ def get_articles_by_issues():
                 GROUP BY
                     article.article_id 
                 LIMIT 10
+                OFFSET {offset}
             '''
 
             cursor.execute(query)
