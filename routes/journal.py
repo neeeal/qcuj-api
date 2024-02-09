@@ -59,7 +59,7 @@ def get_issue(issue_id):
                 cursor.execute('''
                         SELECT issues.*, journal.journal FROM issues
                         LEFT JOIN journal ON issues.journal_id = journal.journal_id
-                        WHERE issues.journal_id = %s;
+                        WHERE issues.issues_id = %s;
                                
                                ''', (issue_id,))
                 issue = cursor.fetchone()
