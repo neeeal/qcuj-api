@@ -67,3 +67,58 @@ def get_issue(issue_id):
                 return jsonify( issue)
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+@journal_bp.route('/issues/articles', methods=['GET'])
+def get_articles_by_issues():
+
+    issue = request.args.get('issue')
+    try:
+        db.ping(reconnect=True)
+        with db.cursor() as cursor:
+            if not issue:
+                issue_conditions = '1=1'  
+            else:
+                issue_conditions = f'article.issues_id =  {issue}' 
+            
+            query = f'''
+                SELECT 
+                    article.article_id,
+                    LEFT(article.abstract, 180) AS abstract,
+                    article.title,
+                    file_name.file_name,
+                    COALESCE(total_reads, 0) AS total_reads,
+                    COALESCE(total_citations, 0) AS total_citations,
+                    COALESCE(total_downloads, 0) AS total_downloads
+                FROM article 
+                LEFT JOIN 
+                    (
+                        SELECT article_id,file_name
+                        FROM article_final_files
+                        WHERE production = 1 AND file_type = "final"
+                    ) AS file_name ON article.article_id = file_name.article_id
+                LEFT JOIN
+                    (
+                        SELECT
+                            article_id,
+                            COUNT(CASE WHEN logs.type = 'read' THEN 1 END) AS total_reads,
+                            COUNT(CASE WHEN logs.type = 'citation' THEN 1 END) AS total_citations,
+                            COUNT(CASE WHEN logs.type = 'download' THEN 1 END) AS total_downloads
+                        FROM logs
+                        GROUP BY article_id
+                    ) AS log_counts ON article.article_id = log_counts.article_id
+                WHERE
+                     article.status = 1
+                     AND
+                     {issue_conditions}
+                GROUP BY
+                    article.article_id 
+                LIMIT 10
+            '''
+
+            cursor.execute(query)
+            result = cursor.fetchall()
+         
+            return jsonify(result)
+    except Exception as e:
+        print(e)
+        return jsonify({'error': 'An error occurred while fetching article data.'}), 500
