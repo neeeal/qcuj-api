@@ -5,7 +5,7 @@ faqs_bp = Blueprint('faqs',__name__)
 
 @faqs_bp.route('/', methods=['GET'])
 def get_faqs():
-    category = request.args.get('category',"general_questions")
+    category = request.args.get('category',"GENERAL QUESTIONS")
     limit = request.args.get('limit')
     
     
