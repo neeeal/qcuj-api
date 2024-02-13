@@ -23,8 +23,8 @@ def get_articles_by_title():
                 sort = "ORDER BY article.title ASC"
             elif sort_param == 'publication-date':
                 sort = "ORDER BY article.publication_date DESC"
-            elif sort_param == 'recently-added':
-                sort = "ORDER BY article.date_added DESC"
+            # elif sort_param == 'recently-added':
+            #     sort = "ORDER BY article.date_added DESC"
             elif sort_param == 'popular':
                 sort = "ORDER BY total_interactions DESC"
             elif sort_param == 'downloads':
@@ -59,7 +59,15 @@ def get_articles_by_title():
             
             query = f'''
                 SELECT 
-                    article.*, 
+                    article.article_id,
+                    article.journal_id,
+                    article.title,
+                    LEFT(article.abstract, 150) AS abstract,
+                    article.keyword,
+                    article.publication_date,
+                    article.status,
+                    article.issues_id,
+                    issues.title,
                     journal.journal,
                     COALESCE(total_reads, 0) AS total_reads,
                     COALESCE(total_citations, 0) AS total_citations,
@@ -68,8 +76,10 @@ def get_articles_by_title():
                     c.contributors
                 FROM 
                 article 
-                  LEFT JOIN 
+                LEFT JOIN 
                     journal ON article.journal_id = journal.journal_id 
+                LEFT JOIN 
+                    issues ON article.issues_id = issues.issues_id 
                 LEFT JOIN
                     (
                         SELECT
@@ -118,7 +128,7 @@ def get_articles_by_title():
             params = [f"%{date}%" for date in dates] + [f"%{j}%" for j in journal]  +input_params + input_params + input_params + input_params
        
             # print(params)
-            print(f"{query}", params)
+            print(f"{query}","para", params,"ff")
             cursor.execute(f"{query}", params)
             result = cursor.fetchall()
             if len(result)==0:
@@ -126,7 +136,7 @@ def get_articles_by_title():
             for i in range(len(result)): ## Adding contains to each result
                 result[i]["article_contains"]=[]
             
-            article_info = [result[info]["title"]+result[info]["author"]+result[info]["keyword"] for info in range(len(result))]
+            article_info = [result[info]["title"]+result[info]["keyword"] for info in range(len(result))]
             
             for input in input_array:
                 for n,info in enumerate(article_info):
