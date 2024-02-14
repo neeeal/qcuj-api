@@ -131,18 +131,20 @@ def get_articles_by_title():
             print(f"{query}","para", params,"ff")
             cursor.execute(f"{query}", params)
             result = cursor.fetchall()
-            if len(result)==0:
-                return jsonify({"message": f"No results found for {input} . Try to use comma to separate keywords"})
-            for i in range(len(result)): ## Adding contains to each result
-                result[i]["article_contains"]=[]
             
-            article_info = [result[info]["title"]+result[info]["keyword"] for info in range(len(result))]
-            
-            for input in input_array:
-                for n,info in enumerate(article_info):
-                    if input in info.lower():
-                        result[n]["article_contains"].append(input)
-            result = sorted(result,  key=lambda x: len(x["article_contains"]), reverse= True)
+            if input.strip() != "":
+                if len(result)==0:
+                    return jsonify({"message": f"No results found for {input} . Try to use comma to separate keywords"})
+                for i in range(len(result)): ## Adding contains to each result
+                    result[i]["article_contains"]=[]
+                
+                article_info = [result[info]["title"]+result[info]["keyword"] for info in range(len(result))]
+                
+                for input in input_array:
+                    for n,info in enumerate(article_info):
+                        if input in info.lower():
+                            result[n]["article_contains"].append(input)
+                result = sorted(result,  key=lambda x: len(x["article_contains"]), reverse= True)
             return jsonify({"results": result, "total": len(result)})
     except Exception as e:
         print(e)
