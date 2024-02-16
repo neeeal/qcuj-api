@@ -9,7 +9,6 @@ auth_bp = Blueprint('auth', __name__)
 app = Flask(__name__)
 
 @auth_bp.route('/login', methods=['POST'])
-@auth_bp.route('/login', methods=['POST'])
 def handle_login():
     try:
         # Get email and password from request data
@@ -31,3 +30,16 @@ def handle_login():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@auth_bp.route('/<string:author_id>', methods=['GET'])
+def getUser(author_id):
+    db.ping(reconnect=True)
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM author WHERE author_id = %s", (author_id))
+        user = cursor.fetchone()
+
+    # Check if user exists
+    if user:
+        return jsonify(user), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
