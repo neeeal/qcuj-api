@@ -26,7 +26,7 @@ def check_originality():
             })  
     return jsonify({'error':'error'})
     
-model = load_model('models//classifier_v4//model.h5')
+model = load_model('models//classifier_v08//model.h5')
 
 @check_bp.route('/journal', methods=['POST'])
 def classify_article():
@@ -34,16 +34,15 @@ def classify_article():
     abstract = data['abstract']
    
     ## Load tokenizer and encoder
-    tokenizer = load_tokenizer('models//classifier_v4//tokenizer.pickle')
-    label_encoder = load_label_encoder('models//classifier_v4//label_encoder.pickle')
+    tokenizer = load_tokenizer('models//classifier_v08//tokenizer.pickle')
+    # label_encoder = load_label_encoder('models//classifier_v07//label_encoder.pickle')
 
     ## Preprocess abstract
     input_data, input_label = preprocess_abstract(abstract,tokenizer)
 
     ## classify abstract
-    result = classify(input_data, model, label_encoder)
+    result = classify(input_data, model)
 
     return {
-            'journal_classification': f"{result[1]+1}",
-            'journal_name': result[0],
+            'journal_classification': f"{result+1}"
             }

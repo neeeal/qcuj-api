@@ -220,12 +220,12 @@ def preprocess_abstract(abstract, tokenizer, label=None):
     sequences = tokenizer.texts_to_sequences([abstract])
 
     ## Fill with zeros or truncate the array of word IDs. The maximum length is 50.
-    pad_trunc_sequences = pad_sequences(sequences, maxlen=20, padding='post', truncating='post')
+    pad_trunc_sequences = pad_sequences(sequences, maxlen=200, padding='post', truncating='post')
 
     return pad_trunc_sequences, label
 
 
-def classify(input_data, model, label_encoder):
+def classify(input_data, model, label_encoder=None):
     '''
         Function to classify processed abstract 
         arguments: 
@@ -244,9 +244,9 @@ def classify(input_data, model, label_encoder):
     print(output )
 
     ## Get the journal name equivalent of the output of classification
-    journal = label_encoder.inverse_transform([output])
+    # journal = label_encoder.inverse_transform([output])
 
     ## replace _ with whitespace in the journal name
-    journal = ' '.join(journal[0].split('_'))
+    # journal = ' '.join(journal[0].split('_'))
     
-    return [journal, output]
+    return output
