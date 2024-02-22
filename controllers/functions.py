@@ -112,9 +112,47 @@ def get_article_recommendations( article_id, overviews_similarity_matrix, titles
 
  
 def get_originality_score(input_title, input_abstract):
+    placeholder = ', '.join(str(i) for i in id)
+    sql_query = '''
+        SELECT article_id, title, abstract FROM article WHERE status = 1
+    ''' 
+    db.ping(reconnect=True)
+    with db.cursor() as cursor:
+        cursor.execute(sql_query)
+        datas = cursor.fetchall()
+        
+    newIds = [row['article_id'] for row in datas]
+    newOverviews = [row['abstract'] for row in datas]
+    newTitles = [row['title'] for row in datas]
+    
+    print(len(newIds))
+    for i in newIds:
+        print(i)
+    
+    for n, name in enumerate(newOverviews):
+        if len(name) == 0: continue
+        temp = name.lower().split(" ")
+        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+        temp = [word for word in temp if word not in stop_words]
+        temp = ' '.join(temp)
+        newOverviews[n] = temp
+        
+    for n, title in enumerate(newTitles):
+        if len(title) == 0: continue
+        temp = title.lower().split(" ")
+        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+        temp = [word for word in temp if word not in stop_words]
+        temp = ' '.join(temp)
+        newTitles[n] = temp
+    
+    # overviews.extend(newOverviews)
+    # titles.extend(newTitles)
+    # id.extend(newIds)
+    # for i in datas:
+    #     data.append({ "article_id": i.article_id , "title": i.title, "abstract": i.abstract})
     
     # Combine the input title and abstract into a single string if needed
-    input_text = f"{input_title} {input_abstract}"
+    # input_text = f"{input_title} {input_abstract}"
    
     input_title = input_title.lower().split(" ")
     input_title = [''.join([letter for letter in word if letter.isalnum()]) for word in input_title]
@@ -127,18 +165,16 @@ def get_originality_score(input_title, input_abstract):
     input_abstract = [word for word in input_abstract if word not in stop_words]
     input_abstract = ' '.join(input_abstract)
     
-    overviews.append(input_abstract)
-    titles.append(input_title)
-
-    title_vectorizer = CountVectorizer().fit(titles)
-    overview_vectorizer = CountVectorizer().fit(overviews)
-    vectorizer = CountVectorizer().fit(overviews + titles)
-    vectorizer_overviews = overview_vectorizer.transform([overviews[-1]])
-    cosine_sim_overviews = cosine_similarity(vectorizer_overviews, overview_vectorizer.transform(overviews[:-1]))
+    newOverviews.append(input_abstract)
+    newTitles.append(input_title)
+    overview_vectorizer = CountVectorizer().fit(newOverviews)
+    vectorizer_overviews = overview_vectorizer.transform([newOverviews[-1]])
+    cosine_sim_overviews = cosine_similarity(vectorizer_overviews, overview_vectorizer.transform(newOverviews[:-1]))
 
     
-    vectorizer_titles = title_vectorizer.transform([titles[-1]])
-    cosine_sim_titles = cosine_similarity(vectorizer_titles, title_vectorizer.transform(titles[:-1]))
+    title_vectorizer = CountVectorizer().fit(newTitles)
+    vectorizer_titles = title_vectorizer.transform([newTitles[-1]])
+    cosine_sim_titles = cosine_similarity(vectorizer_titles, title_vectorizer.transform(newTitles[:-1]))
 
     combined_similarity = (cosine_sim_overviews + cosine_sim_titles)/2
     similar_articles = sorted(enumerate(combined_similarity[0]), key=lambda x: x[1], reverse=True)
@@ -148,17 +184,17 @@ def get_originality_score(input_title, input_abstract):
     
     
     recommended_articles = []
-
+    
     for (i,j,k) in zip(similar_titles, similar_overviews,similar_articles):
         if j[1] < 0.50 and i[1] < 0.50:
             break
  
         index = k[0]
-        if index < len(titles) and index < len(overviews):
+        if index < len(newTitles) and index < len(newOverviews):
             recommended_article = {
-                'title': data[index]['title'],
-                'abstract': data[index]['abstract'],
-                'article_id': data[index]['article_id'],
+                'title': datas[index]['title'],
+                'abstract': datas[index]['abstract'],
+                'article_id': datas[index]['article_id'],
                 'score': {
                     'title': i[1],
                     'overview': j[1],
@@ -168,10 +204,10 @@ def get_originality_score(input_title, input_abstract):
             }
             recommended_articles.append(recommended_article)
     
-    if overviews:
-        overviews.pop()
-    if titles:
-        titles.pop()
+    # if newOverviews:
+    #     newOverviews.pop()
+    # if newTitles:
+    #     newTitles.pop()
     return recommended_articles
 
 def load_tokenizer(path):
