@@ -189,6 +189,7 @@ def recommend_and_add_to_history():
                 journal.journal,
                 article.keyword,
                 issues.title AS issue_title,
+                issues.issn,
                 file_name.file_name,
                 COALESCE(total_reads, 0) AS total_reads,
                 COALESCE(total_citations, 0) AS total_citations,
