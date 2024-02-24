@@ -188,6 +188,7 @@ def recommend_and_add_to_history():
                 article.*,
                 journal.journal,
                 article.keyword,
+                issues.title AS issue_title,
                 file_name.file_name,
                 COALESCE(total_reads, 0) AS total_reads,
                 COALESCE(total_citations, 0) AS total_citations,
@@ -197,6 +198,7 @@ def recommend_and_add_to_history():
             FROM
                 article
             LEFT JOIN journal ON article.journal_id = journal.journal_id
+            LEFT JOIN issues ON article.issues_id = issues.issues_id 
             LEFT JOIN
                 (
                     SELECT
