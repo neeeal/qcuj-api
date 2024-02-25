@@ -25,7 +25,44 @@ def check_originality():
                 'similar_articles': similar_articles
             })  
     return jsonify({'error':'error'})
-    
+
+@check_bp.route('/duplication/v2', methods=['POST'])
+def check_originality_by_id():
+    data = request.get_json()
+    id = data.get('id')
+    if id is None:
+        return jsonify({'error': 'No ID provided'})
+
+    try:
+        db.ping(reconnect=True)
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT article_id, title, abstract FROM article WHERE article_id = %s
+        """, (id,))
+        
+        article_data = cursor.fetchone()
+        print(article_data,"arttt",id)
+        if article_data:
+            title = article_data['title']
+            abstract = article_data['abstract']
+            similar_articles = get_originality_score(title, abstract,False)
+            
+            similar_articles = [article for article in similar_articles if article['article_id'] != id]
+            
+            if isinstance(similar_articles, list) and similar_articles:
+                return jsonify({
+                    'flagged': True,
+                    'similar_articles': similar_articles,
+                    'selected_article': article_data
+                })
+            else:
+                return jsonify({'flagged': False, 'similar_articles': []})
+        else:
+            return jsonify({'error': 'Article not found'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
 model = load_model('models//classifier_v09//model.h5')
 
 @check_bp.route('/journal', methods=['POST'])

@@ -111,11 +111,17 @@ def get_article_recommendations( article_id, overviews_similarity_matrix, titles
         return ["Article ID not found in the mapping."]
 
  
-def get_originality_score(input_title, input_abstract):
-    placeholder = ', '.join(str(i) for i in id)
-    sql_query = '''
-        SELECT article_id, title, abstract FROM article WHERE status = 1
-    ''' 
+def get_originality_score(input_title, input_abstract, isPublished=True):
+    where_condition = ""
+    
+    if isPublished:
+        where_condition = "WHERE status = 1"
+    
+    sql_query = f'''
+        SELECT article_id, title, abstract 
+        FROM article 
+        {where_condition}
+    '''
     db.ping(reconnect=True)
     with db.cursor() as cursor:
         cursor.execute(sql_query)
