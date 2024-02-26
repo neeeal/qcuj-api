@@ -112,7 +112,7 @@ def get_article_recommendations( article_id, overviews_similarity_matrix, titles
 
  
 def get_originality_score(input_title, input_abstract, isPublished=True):
-    where_condition = ""
+    where_condition = "WHERE status != 6"
     
     if isPublished:
         where_condition = "WHERE status = 1"
