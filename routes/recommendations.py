@@ -75,12 +75,15 @@ def get_reco_based_on_history(author_id):
                            SELECT 
                                 article.article_id, article.title, article.author, article.publication_date, article.abstract, journal.journal, article.keyword,
                                 MAX(logs.date) AS last_read,  
-                                COUNT(logs.article_id) AS user_interactions, GROUP_CONCAT(DISTINCT CONCAT(contributors.firstname, ' ', contributors.lastname, '->', contributors.orcid) SEPARATOR ', ') AS contributors
-
+                                COUNT(logs.article_id) AS user_interactions,
+                                c.contributors
                             FROM article 
                                 LEFT JOIN logs ON article.article_id = logs.article_id
                                 LEFT JOIN journal ON article.journal_id = journal.journal_id
-                                LEFT JOIN contributors ON article.article_id = contributors.article_id
+                                 LEFT JOIN(
+                                    SELECT 
+                                    	article_id, GROUP_CONCAT(DISTINCT CONCAT(firstname,' ',lastname,'->',orcid) SEPARATOR ', ') AS contributors
+                     				FROM contributors GROUP BY article_id) AS c ON article.article_id = c.article_id
                             WHERE logs.author_id = %s
                             GROUP BY article.article_id
                             ORDER BY last_read DESC

@@ -37,7 +37,14 @@ def check_originality_by_id():
         db.ping(reconnect=True)
         cursor = db.cursor()
         cursor.execute("""
-            SELECT article_id, title, abstract FROM article WHERE article_id = %s
+            SELECT article.article_id, article.title, article.abstract, article.publication_date,article.status, c.contributors 
+            FROM article 
+            LEFT JOIN(
+                SELECT 
+                	article_id, GROUP_CONCAT(DISTINCT CONCAT(firstname,' ',lastname,'->',orcid) SEPARATOR ', ') AS contributors
+ 				FROM contributors GROUP BY article_id) AS c ON article.article_id = c.article_id
+            WHERE article.article_id = %s
+            GROUP BY article.article_id
         """, (id,))
         
         article_data = cursor.fetchone()
