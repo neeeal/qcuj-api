@@ -112,44 +112,60 @@ def get_article_recommendations( article_id, overviews_similarity_matrix, titles
 
  
 def get_originality_score(input_title, input_abstract, isPublished=True):
+    print("Checkpoint 0")
+
     where_condition = "WHERE status != 6"
     
     if isPublished:
         where_condition = "WHERE status = 1"
     
     sql_query = f'''
-        SELECT article_id, title, abstract 
+        SELECT article.article_id, article.title, article.abstract,  c.contributors 
         FROM article 
+        LEFT JOIN(
+            SELECT 
+            	article_id, GROUP_CONCAT(DISTINCT CONCAT(firstname,' ',lastname) SEPARATOR ', ') AS contributors
+ 				FROM contributors GROUP BY article_id
+ 		) AS c ON article.article_id = c.article_id
         {where_condition}
     '''
+    
     db.ping(reconnect=True)
     with db.cursor() as cursor:
         cursor.execute(sql_query)
         datas = cursor.fetchall()
         
-    newIds = [row['article_id'] for row in datas]
+    print("Checkpoint 1")
+        
+    # newIds = [row['article_id'] for row in datas]
     newOverviews = [row['abstract'] for row in datas]
     newTitles = [row['title'] for row in datas]
     
-    print(len(newIds))
-    for i in newIds:
-        print(i)
+    # print(len(newIds))
+    # for i in newIds:
+    #     print(i)
     
     for n, name in enumerate(newOverviews):
-        if len(name) == 0: continue
-        temp = name.lower().split(" ")
-        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
-        temp = [word for word in temp if word not in stop_words]
-        temp = ' '.join(temp)
-        newOverviews[n] = temp
-        
-    for n, title in enumerate(newTitles):
-        if len(title) == 0: continue
-        temp = title.lower().split(" ")
-        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
-        temp = [word for word in temp if word not in stop_words]
-        temp = ' '.join(temp)
-        newTitles[n] = temp
+        if len(name) != 0:
+            temp = name.lower().split(" ")
+            temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+            temp = [word for word in temp if word not in stop_words]
+            temp = ' '.join(temp)
+            newOverviews[n] = temp
+        if len(newTitles[n]) != 0:
+            temp = newTitles[n].lower().split(" ")
+            temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+            temp = [word for word in temp if word not in stop_words]
+            temp = ' '.join(temp)
+            newTitles[n] = temp
+    # for n, title in enumerate(newTitles):
+    #     if len(title) == 0: continue
+    #     temp = title.lower().split(" ")
+    #     temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+    #     temp = [word for word in temp if word not in stop_words]
+    #     temp = ' '.join(temp)
+    #     newTitles[n] = temp
+    print("Checkpoint 2")
     
     # overviews.extend(newOverviews)
     # titles.extend(newTitles)
@@ -173,6 +189,10 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
     
     newOverviews.append(input_abstract)
     newTitles.append(input_title)
+    
+    print("Checkpoint 3")
+    
+    
     overview_vectorizer = CountVectorizer().fit(newOverviews)
     vectorizer_overviews = overview_vectorizer.transform([newOverviews[-1]])
     cosine_sim_overviews = cosine_similarity(vectorizer_overviews, overview_vectorizer.transform(newOverviews[:-1]))
@@ -188,6 +208,8 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
     similar_overviews= sorted(enumerate(cosine_sim_overviews[0]), key=lambda x: x[1], reverse=True)
     similar_titles = sorted(enumerate(cosine_sim_titles[0]), key=lambda x: x[1], reverse=True)
     
+    print("Checkpoint 4")
+    
     
     recommended_articles = []
     
@@ -201,6 +223,7 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
                 'title': datas[index]['title'],
                 'abstract': datas[index]['abstract'],
                 'article_id': datas[index]['article_id'],
+                'contributors': datas[index]['contributors'],
                 'score': {
                     'title': i[1],
                     'overview': j[1],
@@ -212,6 +235,8 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
     
     # if newOverviews:
     #     newOverviews.pop()
+    print("Checkpoint 5")
+    
     # if newTitles:
     #     newTitles.pop()
     return recommended_articles
