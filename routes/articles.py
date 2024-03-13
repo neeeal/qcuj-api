@@ -62,6 +62,7 @@ def get_articles_by_title():
                     article.article_id,
                     article.journal_id,
                     article.title,
+                    article.author,
                     LEFT(article.abstract, 150) AS abstract,
                     article.keyword,
                     article.publication_date,
