@@ -287,7 +287,7 @@ def preprocess_abstract(abstract, tokenizer, label=None):
     sequences = tokenizer.texts_to_sequences([abstract])
 
     ## Fill with zeros or truncate the array of word IDs. The maximum length is 50.
-    pad_trunc_sequences = pad_sequences(sequences, maxlen=200, padding='post', truncating='post')
+    pad_trunc_sequences = pad_sequences(sequences, maxlen=100, padding='post', truncating='post')
 
     return pad_trunc_sequences, label
 

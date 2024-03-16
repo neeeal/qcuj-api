@@ -1,0 +1,3 @@
+Best Epoch: 149 
+Final Train Loss: 0.0114
+Final Train accuracy: 99.63%
