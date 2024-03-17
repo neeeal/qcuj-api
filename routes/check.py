@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify,Blueprint
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import load_model
-from controllers.functions import  get_originality_score,load_tokenizer,load_label_encoder,preprocess_abstract,classify
+from controllers.functions import  get_originality_score,load_tokenizer,load_label_encoder,preprocess_abstract,classify, get_reviewer_recommendation
 from db import db
 
 check_bp = Blueprint('check',__name__)
@@ -90,3 +90,16 @@ def classify_article():
     return {
             'journal_classification': f"{result+1}"
             }
+@check_bp.route('/reviewers', methods=['POST'])
+def recommend_reviewers():
+    data = request.get_json()
+    title = data['title']
+    abstract = data['abstract']
+    
+    if title is None or abstract is None:
+        return jsonify({'error': 'No ID provided'})
+    input = title + ' ' + abstract
+    recommended_reviewers = get_reviewer_recommendation(input)
+    
+    return recommended_reviewers
+    

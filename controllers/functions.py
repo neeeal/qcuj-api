@@ -317,3 +317,84 @@ def classify(input_data, model, label_encoder=None):
     # journal = ' '.join(journal[0].split('_'))
     
     return output
+    
+def get_reviewer_recommendation(input_article):
+
+    sql_query = f'''
+        SELECT * FROM author
+    '''
+    
+    db.ping(reconnect=True)
+    with db.cursor() as cursor:
+        cursor.execute(sql_query)
+        data = cursor.fetchall()
+        
+    # newIds = [row['article_id'] for row in datas]
+    # newOverviews = [row['abstract'] for row in datas]
+    # newTitles = [row['title'] for row in datas]
+    ids = [row['author_id'] for row in data]
+    field_of_expertises = [row['field_of_expertise'] for row in data]
+    bios = [row['bio'] for row in data] 
+
+    # print(len(newIds))
+    # for i in newIds:
+    #     print(i)
+
+    
+    modified_bios = []
+    
+    for n, bio in enumerate(bios):
+        if bio is None:
+            modified_bios.append("")
+            continue
+        temp = bio.lower().split(" ")
+        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+        temp = [word for word in temp if word not in stop_words]
+        temp = ' '.join(temp)
+        modified_bios.append(temp)
+        
+    modified_field_of_expertises = []
+
+    for n, field_of_expertise in enumerate(field_of_expertises):
+        if field_of_expertise is None:
+            modified_field_of_expertises.append("")
+            continue
+        parts = field_of_expertise.strip().split(",")
+        processed_parts = []
+        for part in parts:
+            words = part.lower().strip().split() 
+            processed_part = " ".join(word for word in words if word not in stop_words) 
+            processed_parts.append(processed_part)
+        modified_field_of_expertises.append(" ".join(processed_parts)) 
+        
+    
+    # Joining the data
+    joined_data = [field_of_expertise + " " + bio if bio is not None else None for field_of_expertise, bio in zip(modified_field_of_expertises, modified_bios)]
+
+    # Preprocess input_article
+    input_article = input_article.lower().strip().split(" ")
+    input_article = [''.join([letter for letter in word if letter.isalnum()]) for word in input_article]
+    input_article = [word for word in input_article if word not in stop_words]
+    input_article = ' '.join(input_article)
+    joined_data.append(input_article)
+
+    # Vectorization
+    vectorizer = CountVectorizer().fit(joined_data)
+    vectorized_data = vectorizer.transform(joined_data).toarray()
+
+    # Compute cosine similarity
+    cosine_sim_words = cosine_similarity(vectorized_data, vectorized_data)
+
+    # Sort similar words
+    similar_words = sorted(enumerate(cosine_sim_words[-1]), key=lambda x: x[1], reverse=True)
+
+    recommended_articles = []
+
+    # Iterate over similar words
+    for i, similarity_score in similar_words:
+        if i < len(joined_data) - 1:  
+            recommended_article = {key: data[i][key] for key in data[i]}
+            recommended_article['score'] = similarity_score
+            recommended_articles.append(recommended_article)
+
+    return recommended_articles
