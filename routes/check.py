@@ -76,13 +76,13 @@ model = load_model('models//finalClassifier_v0015//model.h5')
 def classify_article():
     data = request.get_json()
     abstract = data['abstract']
-   
+    title = data['title']
     ## Load tokenizer and encoder
     tokenizer = load_tokenizer('models//finalClassifier_v0015//tokenizer.pickle')
     # label_encoder = load_label_encoder('models//classifier_v07//label_encoder.pickle')
-
+    input = title + " " + abstract
     ## Preprocess abstract
-    input_data, input_label = preprocess_abstract(abstract,tokenizer)
+    input_data, input_label = preprocess_abstract(input,tokenizer)
 
     ## classify abstract
     result = classify(input_data, model)
@@ -93,13 +93,35 @@ def classify_article():
 @check_bp.route('/reviewers', methods=['POST'])
 def recommend_reviewers():
     data = request.get_json()
-    title = data['title']
-    abstract = data['abstract']
+    id = data['id']
+    # abstract = data['abstract']
     
-    if title is None or abstract is None:
+    if id is None:
         return jsonify({'error': 'No ID provided'})
-    input = title + ' ' + abstract
-    recommended_reviewers = get_reviewer_recommendation(input)
-    
-    return recommended_reviewers
+        
+    try:
+        db.ping(reconnect=True)
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT article.article_id, article.title, article.keyword, article.publication_date
+            FROM article 
+            WHERE article.article_id = %s
+        """, (id,))
+        
+        article_data = cursor.fetchone()
+        
+        if article_data:
+            title = article_data['title']
+            keywords = article_data['keyword']
+            input = title + ' ' + keywords
+            recommended_reviewers = get_reviewer_recommendation(input)
+            return jsonify({
+                "sorted_reviewers": recommended_reviewers,
+                "article_title": title 
+            }), 200
+        return jsonify({'error': 'Article not found'}),400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}),500
+  
     

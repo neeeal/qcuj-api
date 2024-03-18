@@ -321,25 +321,48 @@ def classify(input_data, model, label_encoder=None):
 def get_reviewer_recommendation(input_article):
 
     sql_query = f'''
-        SELECT * FROM author
+    SELECT 
+        a1.*,
+        (SELECT 
+            COUNT(CASE WHEN ra.`accept` = 1 AND ra.`answer` = 1 THEN 1 END)
+         FROM 
+            reviewer_assigned ra
+         WHERE 
+            ra.`author_id` = a1.`author_id`) AS total_success,
+        (SELECT 
+            COUNT(CASE WHEN ra.`deadline` < CURDATE() THEN 1 END)
+         FROM 
+            reviewer_assigned ra
+         WHERE 
+            ra.`author_id` = a1.`author_id`) AS ongoing,
+        (SELECT 
+            COUNT(CASE WHEN ra.`deadline` > CURDATE() THEN 1 END)
+         FROM 
+            reviewer_assigned ra
+         WHERE 
+            ra.`author_id` = a1.`author_id`) AS decline
+    FROM 
+        author a1
+    LEFT JOIN 
+        article a2 ON a1.`author_id` = a2.`author_id` AND a2.`article_id` = 179
+    LEFT JOIN 
+        contributors c ON a1.`email_verified` COLLATE utf8mb4_unicode_ci = c.`email` COLLATE utf8mb4_unicode_ci
+    WHERE 
+        a1.`author_id` <> 1
+        AND a2.`article_id` IS NULL
+        AND c.`email` IS NULL;
     '''
     
+    additional_words = ["researcher", "research","professional","master","doctor","documentation","reviewed"]
     db.ping(reconnect=True)
     with db.cursor() as cursor:
         cursor.execute(sql_query)
         data = cursor.fetchall()
-        
-    # newIds = [row['article_id'] for row in datas]
-    # newOverviews = [row['abstract'] for row in datas]
-    # newTitles = [row['title'] for row in datas]
+
     ids = [row['author_id'] for row in data]
     field_of_expertises = [row['field_of_expertise'] for row in data]
     bios = [row['bio'] for row in data] 
-
-    # print(len(newIds))
-    # for i in newIds:
-    #     print(i)
-
+    
     
     modified_bios = []
     
@@ -369,12 +392,14 @@ def get_reviewer_recommendation(input_article):
         
     
     # Joining the data
-    joined_data = [field_of_expertise + " " + bio if bio is not None else None for field_of_expertise, bio in zip(modified_field_of_expertises, modified_bios)]
+    joined_data = [field_of_expertise + " " + bio if bio is not None else None for field_of_expertise, bio in zip(modified_field_of_expertises, modified_bios,)]
 
     # Preprocess input_article
     input_article = input_article.lower().strip().split(" ")
     input_article = [''.join([letter for letter in word if letter.isalnum()]) for word in input_article]
-    input_article = [word for word in input_article if word not in stop_words]
+    # print(input_article)
+    input_article = [word for word in input_article if word not in stop_words]+additional_words
+    # print(input_article)
     input_article = ' '.join(input_article)
     joined_data.append(input_article)
 
