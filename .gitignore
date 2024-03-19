@@ -1,6 +1,7 @@
 sql.ipynb
 models/classifier_v0
 # *.csv
+mdpi/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

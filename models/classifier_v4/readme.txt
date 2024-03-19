@@ -1,1 +1,0 @@
-This classifier model only uses the first 20 words of the abstract.
