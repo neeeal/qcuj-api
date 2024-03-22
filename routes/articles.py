@@ -191,6 +191,7 @@ def recommend_and_add_to_history():
                 article.keyword,
                 issues.title AS issue_title,
                 issues.issn,
+                issues.volume AS issue_volume,
                 file_name.file_name,
                 COALESCE(total_reads, 0) AS total_reads,
                 COALESCE(total_citations, 0) AS total_citations,
