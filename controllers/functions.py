@@ -45,7 +45,9 @@ db.ping(reconnect=True)
 cursor = db.cursor()
 cursor.execute(sql_query)
 data = cursor.fetchall()
-
+    
+cursor.close()  
+db.close() 
 
 id = [row['article_id'] for row in data]
 overviews = [row['abstract'] for row in data]

@@ -165,7 +165,8 @@ def get_filters():
             
     cursor.execute(filtersSQL)
     filters = cursor.fetchone()
-    
+    cursor.close()  
+    db.close() 
     return jsonify(filters),200
 
 @articles_bp.route('/logs/read', methods=['POST'])
@@ -251,6 +252,7 @@ def recommend_and_add_to_history():
        
  
         data = cursor.fetchall()
+        
         if preview == False and len(data) != 0:
             db.ping(reconnect=True)
             with db.cursor() as cursor:
@@ -264,7 +266,9 @@ def recommend_and_add_to_history():
     except pymysql.Error as e:
             
         return jsonify({'message': 'Error inserting read history.', 'error_details': str(e)}), 500
-
+    finally:
+        cursor.close()  
+        db.close() 
     recommendations = get_article_recommendations(article_id, cosine_sim_overviews, cosine_sim_titles)
 
     if isinstance(recommendations, list):  # Check if recommendations is a list

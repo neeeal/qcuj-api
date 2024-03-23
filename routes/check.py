@@ -48,7 +48,10 @@ def check_originality_by_id():
         """, (id,))
         
         article_data = cursor.fetchone()
-        print(article_data,"arttt",id)
+        cursor.close()  
+        db.close() 
+
+        # print(article_data,"arttt",id)
         if article_data:
             title = article_data['title']
             abstract = article_data['abstract']
@@ -109,7 +112,9 @@ def recommend_reviewers():
         """, (id,))
         
         article_data = cursor.fetchone()
-        
+        cursor.close()  
+        db.close() 
+
         if article_data:
             title = article_data['title']
             keywords = article_data['keyword']
