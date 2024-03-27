@@ -197,6 +197,7 @@ def recommend_and_add_to_history():
                 COALESCE(total_reads, 0) AS total_reads,
                 COALESCE(total_citations, 0) AS total_citations,
                 COALESCE(total_downloads, 0) AS total_downloads,
+                COALESCE(total_support, 0) AS total_support,
                 COALESCE(total_interactions, 0) AS total_interactions,
                 c.contributors, c.contributors_A, c.contributors_B
             FROM
@@ -210,6 +211,7 @@ def recommend_and_add_to_history():
                         COUNT(CASE WHEN logs.type = 'read' THEN 1 END) AS total_reads,
                         COUNT(CASE WHEN logs.type = 'citation' THEN 1 END) AS total_citations,
                         COUNT(CASE WHEN logs.type = 'download' THEN 1 END) AS total_downloads,
+                        COUNT(CASE WHEN logs.type = 'support' THEN 1 END) AS total_support,
                         COUNT(logs.article_id) AS total_interactions
                     FROM
                         logs
@@ -281,32 +283,6 @@ def recommend_and_add_to_history():
     else:
         return jsonify({'error': recommendations})
  
-@articles_bp.route('/logs/download',methods=['POST'])
-def insert_downloads():
-        data = request.get_json()
-        article_id = data['article_id']
-        author_id = data.get('author_id', '')
-        db.ping(reconnect=True)
-        with db.cursor() as cursor:
-            cursor.execute('INSERT INTO logs (article_id, author_id,type) VALUES (%s, %s, "download")', (article_id, author_id))
-            db.commit()
-            
-        return jsonify({'message': f"{article_id} is successfully inserted to downloads log of user {author_id}"})
-
-# @articles_bp.route('/logs',methods=['GET'])
-# def insert_logs():
-#     args = request.args
-#     type = args.get('type')
-#     user_id = args.get('user_id')
-#     article_id = args.get('article_id')
-#     db.ping(reconnect=True)
-#     with db.cursor() as cursor:
-#         cursor.execute("INSERT INTO logs (article_id, author_id, type) VALUES (%s, %s, %s)", (article_id, user_id, type))
-#         db.commit()
-            
-#     return jsonify({'message':f"{article_id} successfully inserted to {type} log for {user_id} "})
-
-
 @articles_bp.route('/logs',methods=['POST'])
 def insert_log():
     data = request.get_json()
@@ -320,4 +296,18 @@ def insert_log():
             
     return jsonify({'message':f"{article_id} successfully inserted to {type} log for {author_id} "})
 
+@articles_bp.route('/logs/support', methods=['POST'])
+def insert_support_log():
+    data = request.get_json()
+    article_id = data['article_id']
+    author_id = data.get('author_id', '')
+    db.ping(reconnect=True)
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM logs WHERE article_id = %s AND author_id = %s", (article_id, author_id))
+        support = cursor.fetchone()
+        print(support, "support")
+        if support is None:
+            cursor.execute("INSERT INTO logs (article_id, author_id, type) VALUES (%s, %s,'support')", (article_id, author_id))
+            db.commit()
 
+    return jsonify({'message': f"{article_id} successfully inserted to support log for {author_id} "})
