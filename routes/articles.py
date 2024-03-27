@@ -148,7 +148,7 @@ def get_articles_by_title():
             print(f"{query}","para", params,"ff")
             cursor.execute(f"{query}", params)
             result = cursor.fetchall()
-            
+            db.close()
             if input.strip() != "":
                 if len(result)==0:
                     return jsonify({"message": f"No results found for {input} . Try to use comma to separate keywords"})
@@ -274,10 +274,8 @@ def recommend_and_add_to_history():
         data = cursor.fetchall()
         
         if preview == False and len(data) != 0:
-            db.ping(reconnect=True)
-            with db.cursor() as cursor:
-                cursor.execute('INSERT INTO logs (article_id, author_id) VALUES (%s, %s)', (article_id, author_id))
-                db.commit()
+            cursor.execute('INSERT INTO logs (article_id, author_id) VALUES (%s, %s)', (article_id, author_id))
+            db.commit()
             message =f"{article_id}  successfully inserted to read logs of user {author_id}"
         elif preview == True:
              message = f"This is just a preview of article {article_id}"
