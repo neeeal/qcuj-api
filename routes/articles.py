@@ -305,12 +305,13 @@ def insert_support_log():
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM logs WHERE article_id = %s AND author_id = %s AND type='support'" , (article_id, author_id))
         support = cursor.fetchone()
-        print(support, "support")
         if support is None:
             cursor.execute("INSERT INTO logs (article_id, author_id, type) VALUES (%s, %s,'support')", (article_id, author_id))
             db.commit()
-            return jsonify({'message': f"{article_id} successfully inserted to support log for {author_id} "})
+            return jsonify({'message': f"{article_id} successfully inserted to support log for {author_id} ",'status':True})
         else:
-            return jsonify({'message': f"{article_id} failed to be inserted to support log for {author_id} "}),500
+            cursor.execute("DELETE FROM logs WHERE article_id = %s AND author_id = %s AND type='support'", (article_id, author_id))
+            db.commit()
+            return jsonify({'message': f"{article_id} successfully deleted from support log for {author_id}",'status': False})
             
 
