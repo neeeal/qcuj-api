@@ -303,7 +303,7 @@ def insert_support_log():
     author_id = data.get('author_id', '')
     db.ping(reconnect=True)
     with db.cursor() as cursor:
-        cursor.execute("SELECT * FROM logs WHERE article_id = %s AND author_id = %s", (article_id, author_id))
+        cursor.execute("SELECT * FROM logs WHERE article_id = %s AND author_id = %s AND type='support'" , (article_id, author_id))
         support = cursor.fetchone()
         print(support, "support")
         if support is None:
