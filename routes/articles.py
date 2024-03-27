@@ -309,5 +309,8 @@ def insert_support_log():
         if support is None:
             cursor.execute("INSERT INTO logs (article_id, author_id, type) VALUES (%s, %s,'support')", (article_id, author_id))
             db.commit()
+            return jsonify({'message': f"{article_id} successfully inserted to support log for {author_id} "})
+        else:
+            return jsonify({'message': f"{article_id} failed to be inserted to support log for {author_id} "}),500
+            
 
-    return jsonify({'message': f"{article_id} successfully inserted to support log for {author_id} "})
