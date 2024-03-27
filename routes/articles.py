@@ -1,11 +1,27 @@
-from flask import Flask, request, jsonify, Blueprint
+from flask import Flask, request, jsonify, Blueprint,g
 from db import db
 import pymysql
 from controllers.functions import get_article_recommendations, cosine_sim_overviews,cosine_sim_titles
 
 
 articles_bp = Blueprint('articles',__name__)
+def get_db():
+    if 'db' not in g:
+        g.db = pymysql.connect(
+            host='your_host',
+            user='your_user',
+            password='your_password',
+            database='your_database',
+            charset='utf8mb4',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+    return g.db
 
+@articles_bp.teardown_app_request
+def teardown_db(exception=None):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
 @articles_bp.route('/', methods=['POST'])
 def get_articles_by_title():
@@ -198,6 +214,7 @@ def recommend_and_add_to_history():
                 COALESCE(total_citations, 0) AS total_citations,
                 COALESCE(total_downloads, 0) AS total_downloads,
                 COALESCE(total_support, 0) AS total_support,
+                 COALESCE(isSupported, 0) AS isSupported,
                 COALESCE(total_interactions, 0) AS total_interactions,
                 c.contributors, c.contributors_A, c.contributors_B
             FROM
@@ -212,6 +229,7 @@ def recommend_and_add_to_history():
                         COUNT(CASE WHEN logs.type = 'citation' THEN 1 END) AS total_citations,
                         COUNT(CASE WHEN logs.type = 'download' THEN 1 END) AS total_downloads,
                         COUNT(CASE WHEN logs.type = 'support' THEN 1 END) AS total_support,
+                        COUNT(CASE WHEN logs.type = 'support' AND logs.author_id = %s THEN 1 END) AS isSupported,
                         COUNT(logs.article_id) AS total_interactions
                     FROM
                         logs
@@ -250,7 +268,7 @@ def recommend_and_add_to_history():
                 journal.journal_id,
                 journal.journal,
                 article.article_id;
-        """, (article_id,))
+        """, (author_id,article_id))
        
  
         data = cursor.fetchall()
