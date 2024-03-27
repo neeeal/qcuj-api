@@ -20,6 +20,7 @@ def get_reco_based_on_popularity():
                     COUNT(CASE WHEN logs.type = 'read' THEN 1 END) AS total_reads,
                     COUNT(CASE WHEN logs.type = 'download' THEN 1 END) AS total_downloads,
                     COUNT(CASE WHEN logs.type = 'citation' THEN 1 END) AS total_citations,
+                    COUNT(CASE WHEN logs.type = 'support' THEN 1 END) AS total_support,
 					c.contributors
 
                 FROM article 
@@ -42,6 +43,7 @@ def get_reco_based_on_popularity():
                     COUNT(CASE WHEN logs.type = 'read' THEN 1 END) AS total_reads,
                     COUNT(CASE WHEN logs.type = 'download' THEN 1 END) AS total_downloads,
                     COUNT(CASE WHEN logs.type = 'citation' THEN 1 END) AS total_citations,
+                    COUNT(CASE WHEN logs.type = 'support' THEN 1 END) AS total_support,
 					c.contributors
 
                 FROM article 
