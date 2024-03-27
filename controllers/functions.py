@@ -7,7 +7,8 @@ import pickle
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import load_model
 # from dotenv import load_dotenv
-from db import db
+import db as database
+db = database.connect_db()
 
 
 sql_query= """

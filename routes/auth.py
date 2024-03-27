@@ -1,4 +1,5 @@
-from db import db
+import db as database
+db = database.connect_db()
 from flask import Flask, request, jsonify, Blueprint
 import hashlib
 import jwt

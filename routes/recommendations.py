@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, Blueprint
-from db import db
+import db as database
+db = database.connect_db()
 import pymysql
 import numpy as np
 from controllers.functions import get_article_recommendations, cosine_sim_overviews,cosine_sim_titles

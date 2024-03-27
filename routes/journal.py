@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify,Blueprint
-from db import db
+import db as database
+db = database.connect_db()
 import numpy as np
 journal_bp = Blueprint('journal',__name__)
 

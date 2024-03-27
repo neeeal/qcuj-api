@@ -1,27 +1,11 @@
 from flask import Flask, request, jsonify, Blueprint,g
-from db import db
+import db as database
+db = database.connect_db()
 import pymysql
 from controllers.functions import get_article_recommendations, cosine_sim_overviews,cosine_sim_titles
 
 
 articles_bp = Blueprint('articles',__name__)
-def get_db():
-    if 'db' not in g:
-        g.db = pymysql.connect(
-            host='your_host',
-            user='your_user',
-            password='your_password',
-            database='your_database',
-            charset='utf8mb4',
-            cursorclass=pymysql.cursors.DictCursor
-        )
-    return g.db
-
-@articles_bp.teardown_app_request
-def teardown_db(exception=None):
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
 
 @articles_bp.route('/', methods=['POST'])
 def get_articles_by_title():

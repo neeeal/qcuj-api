@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify,Blueprint
-from db import db
+import db as database
+db = database.connect_db()
 import json
 universities_bp = Blueprint('universities',__name__)
 

@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify,Blueprint
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import load_model
 from controllers.functions import  get_originality_score,load_tokenizer,load_label_encoder,preprocess_abstract,classify, get_reviewer_recommendation
-from db import db
+import db as database
+db = database.connect_db()
 
 check_bp = Blueprint('check',__name__)
 @check_bp.route('/duplication', methods=['POST'])
