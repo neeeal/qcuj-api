@@ -14,7 +14,7 @@ def connect_db():
             user=os.getenv('DATABASE_USER'),
             password=os.getenv('DATABASE_PASSWORD'),
             db=os.getenv('DATABASE_DB'),
-            connect_timeout=8800,
+            connect_timeout=20,
             cursorclass=pymysql.cursors.DictCursor
         )
     return _db

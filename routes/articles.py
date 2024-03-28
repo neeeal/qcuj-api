@@ -129,7 +129,7 @@ def get_articles_by_title():
             params = [f"%{date}%" for date in dates] + [f"%{j}%" for j in journal]  +input_params + input_params + input_params + input_params
        
             # print(params)
-            print(f"{query}","para", params,"ff")
+            # print(f"{query}","para", params,"ff")
             cursor.execute(f"{query}", params)
             result = cursor.fetchall()
             db.close()
