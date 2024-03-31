@@ -324,42 +324,42 @@ def classify(input_data, model, label_encoder=None):
 def get_reviewer_recommendation(input_article):
 
     sql_query = f'''
-       SELECT 
-        a1.*,
-        (SELECT 
-            COUNT(CASE WHEN ra.accept = 1 AND ra.answer = 1 THEN 1 END)
-         FROM 
-            reviewer_assigned ra
-         WHERE 
-            ra.author_id = a1.author_id) AS total_success,
-        (SELECT 
-            COUNT(CASE WHEN ra.deadline < CURDATE() THEN 1 END)
-         FROM 
-            reviewer_assigned ra
-         WHERE 
-            ra.author_id = a1.author_id) AS ongoing,
-        (SELECT 
-            COUNT(CASE WHEN ra.deadline > CURDATE() THEN 1 END)
-         FROM 
-            reviewer_assigned ra
-         WHERE 
-            ra.author_id = a1.author_id) AS decline
+        SELECT 
+            a1.*,
+            (SELECT 
+                COUNT(CASE WHEN ra.accept = 1 AND ra.answer = 1 THEN 1 END)
+             FROM 
+                reviewer_assigned ra
+             WHERE 
+                ra.author_id = a1.author_id) AS total_success,
+            (SELECT 
+                COUNT(CASE WHEN ra.deadline < CURDATE() THEN 1 END)
+             FROM 
+                reviewer_assigned ra
+             WHERE 
+                ra.author_id = a1.author_id) AS ongoing,
+            (SELECT 
+                COUNT(CASE WHEN ra.deadline > CURDATE() THEN 1 END)
+             FROM 
+                reviewer_assigned ra
+             WHERE 
+                ra.author_id = a1.author_id) AS decline
         FROM 
-            author a1
+            author a1 
         LEFT JOIN 
-            article a2 ON a1.author_id = a2.author_id AND a2.article_id = 189
+            article a2 ON a1.author_id = a2.author_id AND a2.article_id = 219
         LEFT JOIN 
-            contributors c ON a1.email_verified COLLATE utf8mb4_unicode_ci = c.email COLLATE utf8mb4_unicode_ci AND c.article_id = 189
+            contributors c ON a1.email_verified COLLATE utf8mb4_unicode_ci = c.email COLLATE utf8mb4_unicode_ci AND c.article_id = 219
         LEFT JOIN 
-            reviewer_assigned ra2 ON a1.author_id = ra2.author_id AND ra2.article_id = 189
+            reviewer_assigned ra2 ON a1.author_id = ra2.author_id AND ra2.article_id = 219
         WHERE 
-            a1.author_id <> 1
+            a1.status = 1
+            AND a1.author_id <> 1
             AND a2.article_id IS NULL
             AND c.email IS NULL
             AND (ra2.article_id IS NULL OR ra2.round <> a2.round);
-
-    '''
-    
+        '''
+        
     additional_words = ["researcher", "research","professional","master","doctor","documentation","reviewed","reviewer","masters","doctorate","thesis","dissertation","expert"]
     db.ping(reconnect=True)
     with db.cursor() as cursor:
