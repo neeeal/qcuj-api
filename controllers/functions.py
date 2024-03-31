@@ -42,77 +42,85 @@ GROUP BY
 
 
            """
-db.ping(reconnect=True)
-cursor = db.cursor()
-cursor.execute(sql_query)
-data = cursor.fetchall()
-    
-cursor.close()  
-db.close() 
-
-id = [row['article_id'] for row in data]
-overviews = [row['abstract'] for row in data]
-titles = [row['title'] for row in data] 
-
-# Preprocessing
-nltk.download("stopwords")
-stop_words = set(stopwords.words("english"))
-
-for n, name in enumerate(overviews):
-    temp = name.lower().split(" ")
-    temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
-    temp = [word for word in temp if word not in stop_words]
-    temp = ' '.join(temp)
-    overviews[n] = temp
-    
-for n, title in enumerate(titles):
-    temp = title.lower().split(" ")
-    temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
-    temp = [word for word in temp if word not in stop_words]
-    temp = ' '.join(temp)
-    titles[n] = temp
-    
-# Calculate cosine similarity
-    from sklearn.feature_extraction.text import CountVectorizer
-
-    vectorizer = CountVectorizer().fit(overviews + titles)
-    # Calculate cosine similarity for overviews
-    vectorizer_overviews = vectorizer.transform(overviews)
-    cosine_sim_overviews = cosine_similarity(vectorizer_overviews)
-
-    # Calculate cosine similarity for titles
-    vectorizer_titles =  vectorizer.transform(titles)
-    cosine_sim_titles = cosine_similarity(vectorizer_titles)
-    
-    article_id_to_index = {}  # Create an empty mapping
-    for index, article_id in enumerate(id):
-        article_id_to_index[article_id] = index
+if db is not None:
+    db.ping(reconnect=True)
+    cursor = db.cursor()
+    cursor.execute(sql_query)
+    data = cursor.fetchall()
         
+    cursor.close()  
+    db.close() 
+    
+    id = [row['article_id'] for row in data]
+    overviews = [row['abstract'] for row in data]
+    titles = [row['title'] for row in data] 
+    
+    # Preprocessing
+    nltk.download("stopwords")
+    stop_words = set(stopwords.words("english"))
+    
+    for n, name in enumerate(overviews):
+        temp = name.lower().split(" ")
+        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+        temp = [word for word in temp if word not in stop_words]
+        temp = ' '.join(temp)
+        overviews[n] = temp
+        
+    for n, title in enumerate(titles):
+        temp = title.lower().split(" ")
+        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+        temp = [word for word in temp if word not in stop_words]
+        temp = ' '.join(temp)
+        titles[n] = temp
+        
+    # Calculate cosine similarity
+        from sklearn.feature_extraction.text import CountVectorizer
+    
+        vectorizer = CountVectorizer().fit(overviews + titles)
+        # Calculate cosine similarity for overviews
+        vectorizer_overviews = vectorizer.transform(overviews)
+        cosine_sim_overviews = cosine_similarity(vectorizer_overviews)
+    
+        # Calculate cosine similarity for titles
+        vectorizer_titles =  vectorizer.transform(titles)
+        cosine_sim_titles = cosine_similarity(vectorizer_titles)
+        
+        article_id_to_index = {}  # Create an empty mapping
+        for index, article_id in enumerate(id):
+            article_id_to_index[article_id] = index
+else:
+    # get_article_recommendations = None
+    cosine_sim_overviews = None
+    cosine_sim_titles = None
+    print("Database connection is not available.")
+ 
 def get_article_recommendations( article_id, overviews_similarity_matrix, titles_similarity_matrix):
-    combined_similarity = 0.4 * overviews_similarity_matrix + 0.6 * titles_similarity_matrix
-    
-    if article_id in article_id_to_index:
-        index = article_id_to_index[article_id]
-        similar_articles = combined_similarity[index]
-        similar_articles = sorted(enumerate(similar_articles), key=lambda x: x[1], reverse=True)
-        recommended_articles = []
+    if db is not None:
+        combined_similarity = 0.4 * overviews_similarity_matrix + 0.6 * titles_similarity_matrix
         
-        for i in similar_articles:
-            if i[1] < 0.18:
-                break
-            # recommended_article_title = titles_orig[i[0]]
-            # article_description = overviews_orig[i[0]]
-            # recommended_articles.append({'title': recommended_article_title, 'article_id': id[i[0]], 'score': i[1]})
+        if article_id in article_id_to_index:
+            index = article_id_to_index[article_id]
+            similar_articles = combined_similarity[index]
+            similar_articles = sorted(enumerate(similar_articles), key=lambda x: x[1], reverse=True)
+            recommended_articles = []
             
-            recommended_article = {key: data[i[0]][key] for key in data[i[0]]}
-            recommended_article['score'] = i[1]
-            recommended_articles.append(recommended_article)
-
-
-        return recommended_articles
+            for i in similar_articles:
+                if i[1] < 0.18:
+                    break
+                # recommended_article_title = titles_orig[i[0]]
+                # article_description = overviews_orig[i[0]]
+                # recommended_articles.append({'title': recommended_article_title, 'article_id': id[i[0]], 'score': i[1]})
+                
+                recommended_article = {key: data[i[0]][key] for key in data[i[0]]}
+                recommended_article['score'] = i[1]
+                recommended_articles.append(recommended_article)
+    
+    
+            return recommended_articles
+        else:
+            return ["Article ID not found in the mapping."]
     else:
-        return ["Article ID not found in the mapping."]
-
+        print("Database connection is not available.")
  
 def get_originality_score(input_title, input_abstract, isPublished=True):
     print("Checkpoint 0")

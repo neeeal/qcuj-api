@@ -1,8 +1,7 @@
 from flask import Flask, Blueprint
 
 from controllers.check_controller import  check_originality,check_originality_by_id, classify_article,recommend_reviewers
-import db as database
-db = database.connect_db()
+
 
 check_bp = Blueprint('check',__name__)
 @check_bp.route('/duplication', methods=['POST'])
