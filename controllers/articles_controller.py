@@ -265,6 +265,7 @@ def get_read_article():
                  message = f"This is just a preview of article {article_id}"
             else:
                 message =f"{article_id} failed to be inserted on read logs of user {author_id}"
+                return jsonify({'message': 'Error inserting read history.'}), 400
         except pymysql.Error as e:
             return jsonify({'message': 'Error inserting read history.', 'error_details': str(e)}), 500
         finally:

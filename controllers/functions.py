@@ -117,7 +117,7 @@ def get_article_recommendations( article_id, overviews_similarity_matrix, titles
             recommended_articles = []
             
             for i in similar_articles:
-                if i[1] < 0.10:
+                if i[1] <= 0.2:
                     break
                 # recommended_article_title = titles_orig[i[0]]
                 # article_description = overviews_orig[i[0]]
