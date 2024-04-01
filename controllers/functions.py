@@ -54,6 +54,7 @@ if db is not None:
     id = [row['article_id'] for row in data]
     overviews = [row['abstract'] for row in data]
     titles = [row['title'] for row in data] 
+    keywords = [row['keyword'] for row in data] 
     
     # Preprocessing
     nltk.download("stopwords")
@@ -73,6 +74,13 @@ if db is not None:
         temp = ' '.join(temp)
         titles[n] = temp
         
+    for n, keyword in enumerate(keywords):
+        temp = keyword.lower().split(" ")
+        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+        temp = [word for word in temp if word not in stop_words]
+        temp = ' '.join(temp)
+        keywords[n] = temp
+        
     # Calculate cosine similarity
         from sklearn.feature_extraction.text import CountVectorizer
     
@@ -85,6 +93,10 @@ if db is not None:
         vectorizer_titles =  vectorizer.transform(titles)
         cosine_sim_titles = cosine_similarity(vectorizer_titles)
         
+        # Calculate cosine similarity for titles
+        vectorizer_keywords =  vectorizer.transform(keywords)
+        cosine_sim_keywords = cosine_similarity(vectorizer_keywords)
+        
         article_id_to_index = {}  # Create an empty mapping
         for index, article_id in enumerate(id):
             article_id_to_index[article_id] = index
@@ -96,7 +108,7 @@ else:
  
 def get_article_recommendations( article_id, overviews_similarity_matrix, titles_similarity_matrix):
     if db is not None:
-        combined_similarity = 0.4 * overviews_similarity_matrix + 0.6 * titles_similarity_matrix
+        combined_similarity = 0.4 * overviews_similarity_matrix + 0.3 * titles_similarity_matrix + 0.3 * cosine_sim_keywords
         
         if article_id in article_id_to_index:
             index = article_id_to_index[article_id]
@@ -105,7 +117,7 @@ def get_article_recommendations( article_id, overviews_similarity_matrix, titles
             recommended_articles = []
             
             for i in similar_articles:
-                if i[1] < 0.18:
+                if i[1] < 0.10:
                     break
                 # recommended_article_title = titles_orig[i[0]]
                 # article_description = overviews_orig[i[0]]
