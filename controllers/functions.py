@@ -108,7 +108,7 @@ else:
  
 def get_article_recommendations( article_id, overviews_similarity_matrix, titles_similarity_matrix):
     if db is not None:
-        combined_similarity = 0.3 * overviews_similarity_matrix + 0.3 * titles_similarity_matrix + 0.4 * cosine_sim_keywords
+        combined_similarity = 0.3 * overviews_similarity_matrix + 0.2 * titles_similarity_matrix + 0.5 * cosine_sim_keywords
         
         if article_id in article_id_to_index:
             index = article_id_to_index[article_id]
