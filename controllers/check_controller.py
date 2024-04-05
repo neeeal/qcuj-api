@@ -91,12 +91,15 @@ def classify_article():
             # label_encoder = load_label_encoder('models//classifier_v07//label_encoder.pickle')
             input = title + " " + abstract
             ## Preprocess abstract
-            input_data, input_label = preprocess_abstract(input,tokenizer)
-        
-            ## classify abstract
-            result = classify(input_data, model)
             
-            return {'journal_classification': f"{result+1}"}
+            input_data, input_label = preprocess_abstract(input,tokenizer)
+            if input_data is None:
+                return jsonify({'message': 'No suggestions, invalid data'}), 400
+            else:
+                ## classify abstract
+                result = classify(input_data, model)
+                
+                return {'journal_classification': f"{result+1}"}
         except Exception as e:
             return jsonify({'message': str(e)}),500
     else:

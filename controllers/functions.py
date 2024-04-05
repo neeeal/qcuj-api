@@ -304,16 +304,21 @@ def preprocess_abstract(abstract, tokenizer, label=None):
     abstract = abstract.lower().split(" ")
     abstract = [''.join([letter for letter in word if letter.isalnum()]) for word in abstract]
     abstract = [word for word in abstract if word not in stop_words]
-    abstract = ' '.join(abstract)
+    # abstract = ' '.join(abstract)
+    unique_words = set(abstract)
+    print(len(unique_words), "length")
+    print(unique_words)
+    if len(unique_words) <= 30:
+        return None,None
+        
+    else:
+        ## Assign unique ID to each word in the abstract
+        sequences = tokenizer.texts_to_sequences([abstract])
     
-    ## Assign unique ID to each word in the abstract
-    sequences = tokenizer.texts_to_sequences([abstract])
-
-    ## Fill with zeros or truncate the array of word IDs. The maximum length is 50.
-    pad_trunc_sequences = pad_sequences(sequences, maxlen=100, padding='post', truncating='post')
-
-    return pad_trunc_sequences, label
-
+        ## Fill with zeros or truncate the array of word IDs. The maximum length is 50.
+        pad_trunc_sequences = pad_sequences(sequences, maxlen=100, padding='post', truncating='post')
+    
+        return pad_trunc_sequences, label
 
 def classify(input_data, model, label_encoder=None):
     '''
@@ -328,16 +333,13 @@ def classify(input_data, model, label_encoder=None):
 
     ## classify abstract using model
     output = model(input_data)
-
-    ## Get the highest probability of classification
+    # print(output,"ddddddd")
+    # ## Get the highest probability of classification
+    # if np.max(output < 50):
+    #     output = -1
+        
     output = np.argmax(output)
     print(output )
-
-    ## Get the journal name equivalent of the output of classification
-    # journal = label_encoder.inverse_transform([output])
-
-    ## replace _ with whitespace in the journal name
-    # journal = ' '.join(journal[0].split('_'))
     
     return output
     
