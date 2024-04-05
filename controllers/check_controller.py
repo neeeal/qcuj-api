@@ -94,7 +94,7 @@ def classify_article():
             
             input_data, input_label = preprocess_abstract(input,tokenizer)
             if input_data is None:
-                return jsonify({'message': 'No suggestions, invalid data'}), 400
+                return jsonify({'message': 'No suggested journal matches your article. Please review your article details or select from the provided choices.'}), 400
             else:
                 ## classify abstract
                 result = classify(input_data, model)
