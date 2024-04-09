@@ -77,20 +77,16 @@ def get_reco_based_on_history(author_id):
             with db.cursor() as cursor:
                 cursor.execute("""
                                SELECT 
-                                    article.article_id, article.title, article.author, article.publication_date, article.abstract, journal.journal, article.keyword,
+                                    article.article_id, article.title,  LEFT(article.abstract, 150) AS abstract, journal.journal, 
                                     MAX(logs.date) AS last_read,  
-                                    COUNT(logs.article_id) AS user_interactions,
-                                    c.contributors
+                                    COUNT(logs.article_id) AS user_interactions
                                 FROM article 
                                     LEFT JOIN logs ON article.article_id = logs.article_id
                                     LEFT JOIN journal ON article.journal_id = journal.journal_id
-                                     LEFT JOIN(
-                                        SELECT 
-                                        	article_id, GROUP_CONCAT(DISTINCT CONCAT(firstname,' ',lastname,'->',orcid) SEPARATOR ', ') AS contributors
-                         				FROM contributors GROUP BY article_id) AS c ON article.article_id = c.article_id
-                                WHERE logs.author_id = %s
+                                   
+                                WHERE logs.author_id = %s AND article.status = 1
                                 GROUP BY article.article_id
-                                ORDER BY last_read DESC
+                                ORDER BY user_interactions DESC
                                 LIMIT 5;
                                """,(author_id))
                 data = cursor.fetchall()
@@ -98,7 +94,21 @@ def get_reco_based_on_history(author_id):
                 article_ids = np.unique(article_ids)
                 temp = []
                 results = []
-    
+                db.ping(reconnect=True)
+                with db.cursor() as cursor:
+                    cursor.execute("""
+                               SELECT 
+                                    article.article_id, article.title,  LEFT(article.abstract, 150) AS abstract, journal.journal, 
+                                    MAX(logs.date) AS last_supported 
+                                FROM article 
+                                    LEFT JOIN logs ON article.article_id = logs.article_id
+                                    LEFT JOIN journal ON article.journal_id = journal.journal_id
+                                WHERE logs.author_id = %s AND logs.type='support' AND article.status = 1
+                                GROUP BY article.article_id
+                                ORDER BY last_supported DESC;
+                               """,(author_id))
+                likes = cursor.fetchall()
+                
                 for i in range(len(article_ids)):
                     recommendations = get_article_recommendations(article_ids[i], cosine_sim_overviews, cosine_sim_titles)[1:]
                     if len(recommendations) < 1:
@@ -116,7 +126,9 @@ def get_reco_based_on_history(author_id):
     
                 return jsonify({'message':f"Successfully fetched the history and personalized recommendations for user id {author_id}",
                                 'history':data,
-                                'recommendations': results})
+                                'recommendations': results,
+                                'likes': likes
+                                })
     
         except pymysql.Error as e:
             return jsonify({'message': f"Error fetching recommendations for user id {author_id} ", 'error_details': str(e)}), 500

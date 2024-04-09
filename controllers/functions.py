@@ -135,7 +135,7 @@ def get_article_recommendations( article_id, overviews_similarity_matrix, titles
         print("Database connection is not available.")
  
 def get_originality_score(input_title, input_abstract, isPublished=True):
-    print("Checkpoint 0")
+    # print("Checkpoint 0")
 
     where_condition = "WHERE status != 6"
     
@@ -158,7 +158,7 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
         cursor.execute(sql_query)
         datas = cursor.fetchall()
         
-    print("Checkpoint 1")
+    # print("Checkpoint 1")
         
     # newIds = [row['article_id'] for row in datas]
     newOverviews = [row['abstract'] for row in datas]
@@ -188,7 +188,7 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
     #     temp = [word for word in temp if word not in stop_words]
     #     temp = ' '.join(temp)
     #     newTitles[n] = temp
-    print("Checkpoint 2")
+    # print("Checkpoint 2")
     
     # overviews.extend(newOverviews)
     # titles.extend(newTitles)
@@ -213,7 +213,7 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
     newOverviews.append(input_abstract)
     newTitles.append(input_title)
     
-    print("Checkpoint 3")
+    # print("Checkpoint 3")
     
     
     overview_vectorizer = CountVectorizer().fit(newOverviews)
@@ -231,7 +231,7 @@ def get_originality_score(input_title, input_abstract, isPublished=True):
     similar_overviews= sorted(enumerate(cosine_sim_overviews[0]), key=lambda x: x[1], reverse=True)
     similar_titles = sorted(enumerate(cosine_sim_titles[0]), key=lambda x: x[1], reverse=True)
     
-    print("Checkpoint 4")
+    # print("Checkpoint 4")
     
     
     recommended_articles = []
@@ -306,8 +306,7 @@ def preprocess_abstract(abstract, tokenizer, label=None):
     abstract = [word for word in abstract if word not in stop_words]
     # abstract = ' '.join(abstract)
     unique_words = set(abstract)
-    print(len(unique_words), "length")
-    print(unique_words)
+
     if len(unique_words) <= 30:
         return None,None
         
@@ -339,7 +338,7 @@ def classify(input_data, model, label_encoder=None):
     #     output = -1
         
     output = np.argmax(output)
-    print(output )
+    # print(output )
     
     return output
     
@@ -352,7 +351,7 @@ def get_reviewer_recommendation(input_article):
     with db.cursor() as cursor:
         cursor.execute(sql_query)
         data = cursor.fetchall()
-        print(len(data),"___________________________________----------------")
+        # print(len(data),"___________________________________----------------")
 
     ids = [row['author_id'] for row in data]
     field_of_expertises = [row['field_of_expertise'] for row in data]
