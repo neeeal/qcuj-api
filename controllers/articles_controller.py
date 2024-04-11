@@ -93,7 +93,7 @@ def get_articles():
                     LEFT JOIN(
                         SELECT article_id,
                             GROUP_CONCAT(
-                                DISTINCT CONCAT(firstname, ' ', lastname, '->', orcid) SEPARATOR ', '
+                                DISTINCT CONCAT(firstname, ' ', lastname, '->', orcid)  ORDER BY contributors_id SEPARATOR ', '
                             ) AS contributors
                         FROM
                             contributors
@@ -229,13 +229,13 @@ def get_read_article():
                 LEFT JOIN(
                     SELECT article_id,
                         GROUP_CONCAT(
-                            DISTINCT CONCAT(firstname, ' ', lastname, '->', orcid, '->', contributor_type, '->', email) SEPARATOR ' ; '
+                            DISTINCT CONCAT(firstname, ' ', lastname, '->', orcid, '->', contributor_type, '->', email) ORDER BY contributors_id SEPARATOR ' ; '
                         ) AS contributors,
                         GROUP_CONCAT(
-                            DISTINCT CONCAT(lastname, ', ', firstname) SEPARATOR ' ; '
+                            DISTINCT CONCAT(lastname, ', ', firstname) ORDER BY contributors_id SEPARATOR ' ; '
                         ) AS contributors_A,
                         GROUP_CONCAT(
-                            DISTINCT CONCAT(lastname, ', ', SUBSTRING(firstname, 1, 1), '.') SEPARATOR ' ; '
+                            DISTINCT CONCAT(lastname, ', ', SUBSTRING(firstname, 1, 1), '.')  ORDER BY contributors_id SEPARATOR ' ; '
                         ) AS contributors_B
                         
                     FROM
