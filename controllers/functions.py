@@ -342,78 +342,118 @@ def classify(input_data, model, label_encoder=None):
     
     return output
     
-def get_reviewer_recommendation(input_article):
+def get_reviewer_recommendation(input_article, category):
 
-    sql_query = 'SELECT * from author'
+    sql_query = ''' 
+        SELECT 
+            a1.*,
+            (SELECT 
+                COUNT(CASE WHEN ra.accept = 1 AND ra.answer = 1 THEN 1 END)
+             FROM 
+                reviewer_assigned ra
+             WHERE 
+                ra.author_id = a1.author_id) AS total_success,
+            (SELECT 
+                COUNT(CASE WHEN ra.deadline < CURDATE() THEN 1 END)
+             FROM 
+                reviewer_assigned ra
+             WHERE 
+                ra.author_id = a1.author_id) AS ongoing,
+            (SELECT 
+                COUNT(CASE WHEN ra.deadline > CURDATE() THEN 1 END)
+             FROM 
+                reviewer_assigned ra
+             WHERE 
+                ra.author_id = a1.author_id) AS decline
+        FROM 
+            author a1 
+        LEFT JOIN 
+            article a2 ON a1.author_id = a2.author_id AND a2.article_id = %s
+        LEFT JOIN 
+            contributors c ON a1.email_verified COLLATE utf8mb4_unicode_ci = c.email COLLATE utf8mb4_unicode_ci AND c.article_id = %s
+        LEFT JOIN 
+            reviewer_assigned ra2 ON a1.author_id = ra2.author_id AND ra2.article_id = %s
+        WHERE 
+            a1.status = 1
+            AND a1.author_id <> 1
+            AND a2.article_id IS NULL
+            AND c.email IS NULL
+            AND (ra2.article_id IS NULL OR ra2.round <> a2.round)
+        ORDER by total_success DESC
+    
+    '''
         
-    additional_words = ["researcher", "research","professional","master","doctor","documentation","reviewed","reviewer","masters","doctorate","thesis","dissertation","expert"]
+    # additional_words = ["researcher", "research","professional","master","doctor","documentation","reviewed","reviewer","masters","doctorate","thesis","dissertation","expert"]
     db.ping(reconnect=True)
     with db.cursor() as cursor:
-        cursor.execute(sql_query)
+        cursor.execute(sql_query,(input_article, input_article, input_article))
         data = cursor.fetchall()
         # print(len(data),"___________________________________----------------")
-
-    ids = [row['author_id'] for row in data]
-    field_of_expertises = [row['field_of_expertise'] for row in data]
-    bios = [row['bio'] for row in data] 
     
-    
-    modified_bios = []
-    
-    for n, bio in enumerate(bios):
-        if bio is None:
-            modified_bios.append("")
-            continue
-        temp = bio.lower().split(" ")
-        temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
-        temp = [word for word in temp if word not in stop_words]
-        temp = ' '.join(temp)
-        modified_bios.append(temp)
+    if category == 'total_success': 
+        return data
+    else:
+        ids = [row['author_id'] for row in data]
+        field_of_expertises = [row['field_of_expertise'] for row in data]
+        bios = [row['bio'] for row in data] 
         
-    modified_field_of_expertises = []
-
-    for n, field_of_expertise in enumerate(field_of_expertises):
-        if field_of_expertise is None:
-            modified_field_of_expertises.append("")
-            continue
-        parts = field_of_expertise.strip().split(",")
-        processed_parts = []
-        for part in parts:
-            words = part.lower().strip().split() 
-            processed_part = " ".join(word for word in words if word not in stop_words) 
-            processed_parts.append(processed_part)
-        modified_field_of_expertises.append(" ".join(processed_parts)) 
         
+        modified_bios = []
+        
+        for n, bio in enumerate(bios):
+            if bio is None:
+                modified_bios.append("")
+                continue
+            temp = bio.lower().split(" ")
+            temp = [''.join([letter for letter in word if letter.isalnum()]) for word in temp]
+            temp = [word for word in temp if word not in stop_words]
+            temp = ' '.join(temp)
+            modified_bios.append(temp)
+            
+        modified_field_of_expertises = []
     
-    # Joining the data
-    joined_data = [field_of_expertise + " " + bio if bio is not None else None for field_of_expertise, bio in zip(modified_field_of_expertises, modified_bios,)]
-
-    # Preprocess input_article
-    input_article = input_article.lower().strip().split(" ")
-    input_article = [''.join([letter for letter in word if letter.isalnum()]) for word in input_article]
-    # print(input_article)
-    input_article = [word for word in input_article if word not in stop_words]+additional_words
-    # print(input_article)
-    input_article = ' '.join(input_article)
-    joined_data.append(input_article)
-
-    # Vectorization
-    vectorizer = CountVectorizer().fit(joined_data)
-    vectorized_data = vectorizer.transform(joined_data).toarray()
-
-    # Compute cosine similarity
-    cosine_sim_words = cosine_similarity(vectorized_data, vectorized_data)
-
-    # Sort similar words
-    similar_words = sorted(enumerate(cosine_sim_words[-1]), key=lambda x: x[1], reverse=True)
-
-    recommended_articles = []
-
-    # Iterate over similar words
-    for i, similarity_score in similar_words:
-        if i < len(joined_data) - 1:  
-            recommended_article = {key: data[i][key] for key in data[i]}
-            recommended_article['score'] = similarity_score
-            recommended_articles.append(recommended_article)
-
-    return recommended_articles
+        for n, field_of_expertise in enumerate(field_of_expertises):
+            if field_of_expertise is None:
+                modified_field_of_expertises.append("")
+                continue
+            parts = field_of_expertise.strip().split(",")
+            processed_parts = []
+            for part in parts:
+                words = part.lower().strip().split() 
+                processed_part = " ".join(word for word in words if word not in stop_words) 
+                processed_parts.append(processed_part)
+            modified_field_of_expertises.append(" ".join(processed_parts)) 
+            
+        
+        # Joining the data
+        joined_data = [field_of_expertise + " " + bio if bio is not None else None for field_of_expertise, bio in zip(modified_field_of_expertises, modified_bios,)]
+    
+        # Preprocess input_article
+        input_article = input_article.lower().strip().split(" ")
+        input_article = [''.join([letter for letter in word if letter.isalnum()]) for word in input_article]
+        # print(input_article)
+        input_article = [word for word in input_article if word not in stop_words] #+additional_words
+        # print(input_article)
+        input_article = ' '.join(input_article)
+        joined_data.append(input_article)
+    
+        # Vectorization
+        vectorizer = CountVectorizer().fit(joined_data)
+        vectorized_data = vectorizer.transform(joined_data).toarray()
+    
+        # Compute cosine similarity
+        cosine_sim_words = cosine_similarity(vectorized_data, vectorized_data)
+    
+        # Sort similar words
+        similar_words = sorted(enumerate(cosine_sim_words[-1]), key=lambda x: x[1], reverse=True)
+    
+        recommended_authors = []
+    
+        # Iterate over similar words
+        for i, similarity_score in similar_words:
+            if i < len(joined_data) - 1:  
+                recommended_author = {key: data[i][key] for key in data[i]}
+                recommended_author['score'] = similarity_score
+                recommended_authors.append(recommended_author)
+    
+        return recommended_authors
