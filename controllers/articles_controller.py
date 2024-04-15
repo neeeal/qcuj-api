@@ -192,6 +192,7 @@ def get_read_article():
                     article.keyword,
                     issues.title AS issue_title,
                     issues.issn,
+                    issues.number,
                     issues.volume AS issue_volume,
                     file_name.file_name,
                     COALESCE(total_reads, 0) AS total_reads,
