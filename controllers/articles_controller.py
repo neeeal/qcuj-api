@@ -9,6 +9,7 @@ def get_articles():
     dates = data.get('dates',[])
     journal = data.get('journal',[])
     input = data.get('input','')
+    exact_input = data.get('exact_input','')
     issue = data.get('issue')
     if db is not None:
         try:
@@ -32,7 +33,7 @@ def get_articles():
                         
                 else:
                     sort = ""
-                input_array = [i.lower().strip() for i in input.split(",")]
+                input_array = [i.lower().strip() for i in input.split(" ")]
                 if not dates or dates == []:
                     date_conditions = '1=1'  
                 else:
@@ -52,6 +53,7 @@ def get_articles():
                 keyword_conditions = ' OR '.join('article.keyword LIKE %s' for i in input_array)
                 author_condition = ' OR '.join("c.contributors LIKE %s" for i in input_array)
                 id_condition = ' OR '.join('article.article_id LIKE %s' for i in input_array)
+                
                 
                 query = f'''
                     SELECT 
@@ -114,18 +116,24 @@ def get_articles():
                         OR {id_condition}
                        
                     )
+                    AND
+                    (
+                        article.title LIKE %s 
+                        OR article.keyword LIKE %s
+                        OR c.contributors LIKE %s
+                    )
                     
                     GROUP BY
                     article.article_id 
                     {sort}
                     ;
                 '''
-    
                 input_params = [f"%{input}%" for input in input_array]
-                params = [f"%{date}%" for date in dates] + [f"%{j}%" for j in journal]  +input_params + input_params + input_params + input_params
+                params = [f"%{date}%" for date in dates] + [f"%{j}%" for j in journal]  + input_params * 4 + [f"%{exact_input}%", f"%{exact_input}%", f"%{exact_input}%"]
+
            
-                # print(params)
-                # print(f"{query}","para", params,"ff")
+                print(params)
+                print(f"{query}","para", params,"ff")
                 cursor.execute(f"{query}", params)
                 result = cursor.fetchall()
                 db.close()
@@ -141,6 +149,9 @@ def get_articles():
                         for n,info in enumerate(article_info):
                             if input in info.lower():
                                 result[n]["article_contains"].append(input)
+                    for n,info in enumerate(article_info):
+                            if exact_input in info.lower():
+                                result[n]["article_contains"].append(exact_input)
                     result = sorted(result,  key=lambda x: len(x["article_contains"]), reverse= True)
                 return jsonify({"results": result, "total": len(result)})
         except Exception as e:
