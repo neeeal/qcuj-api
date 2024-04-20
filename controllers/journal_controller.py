@@ -29,7 +29,7 @@ def get_issues():
                 if param is None:
                     return jsonify({"message": "journal_id parameter is required"})
                 else:
-                    cursor.execute('SELECT * FROM issues WHERE journal_id = %s', (param,))
+                    cursor.execute('SELECT * FROM issues WHERE journal_id = %s AND status = 1', (param,))
                     issues = cursor.fetchall()
     
                     # Group issues by year

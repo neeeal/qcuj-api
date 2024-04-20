@@ -107,6 +107,7 @@ def classify_article():
 def recommend_reviewers():
     data = request.get_json()
     id = data['id']
+    category = data.get('category', 'score') 
     # abstract = data['abstract']
     
     if id is None:
@@ -130,7 +131,7 @@ def recommend_reviewers():
                 title = article_data['title']
                 keywords = article_data['keyword']
                 input = title + ' ' + keywords
-                recommended_reviewers = get_reviewer_recommendation(input)
+                recommended_reviewers = get_reviewer_recommendation(input,category)
                 return jsonify({
                     "sorted_reviewers": recommended_reviewers,
                     "article_title": title 
