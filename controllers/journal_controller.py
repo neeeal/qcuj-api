@@ -5,12 +5,14 @@ import numpy as np
 
 def get_journal():
     param = request.args.get('id')
+    search = request.args.get('search')
     if db is not None:
         try:
             db.ping(reconnect=True)
             with db.cursor() as cursor:
                 if param is None:
-                    cursor.execute('SELECT * FROM journal')
+                    cursor.execute('SELECT * FROM journal WHERE journal_id = %s OR journal_title LIKE %s OR subject_areas LIKE %s', (search, '%' + search + '%', '%' + search + '%'))
+
                     return jsonify({"journal": cursor.fetchall()})
                 else:
                     cursor.execute('SELECT * FROM journal WHERE journal_id = %s', (param,))
